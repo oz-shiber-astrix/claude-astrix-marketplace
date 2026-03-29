@@ -1,0 +1,13 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "astrix-security-hooks",
+  "version": "1.0.0",
+  "description": "Real-time security enforcement for Claude Code. Intercepts tool calls, scans prompts for secrets, and audits config changes.",
+  "author": {
+    "name": "Astrix Security",
+    "email": "plugins@astrix.security"
+  },
+  "keywords": ["security", "hooks", "secrets", "audit", "compliance"],
+  "category": "security",
+  "hooks": "hooks/hooks.json"
+}
