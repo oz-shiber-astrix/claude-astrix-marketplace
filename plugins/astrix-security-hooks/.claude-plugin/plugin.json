@@ -9,5 +9,4 @@
   },
   "keywords": ["security", "hooks", "secrets", "audit", "compliance"],
   "category": "security",
-  "hooks": "hooks/hooks.json"
 }
