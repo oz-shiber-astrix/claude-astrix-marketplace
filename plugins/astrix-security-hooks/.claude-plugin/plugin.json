@@ -1,6 +1,5 @@
 {
   "name": "astrix-security-hooks",
   "version": "1.0.0",
-  "description": "Real-time security enforcement for Claude Code",
-  "category": "security"
+  "description": "Real-time security enforcement for Claude Code"
 }
