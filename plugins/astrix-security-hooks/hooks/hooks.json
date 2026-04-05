@@ -1,23 +1,21 @@
 {
   "PreToolUse": [
     {
-      "description": "Block dangerous bash commands before execution",
       "matcher": "Bash",
       "hooks": [
         {
           "type": "command",
-          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-bash.sh",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-bash.sh",
           "timeout": 5000
         }
       ]
     },
     {
-      "description": "Audit all file write operations",
       "matcher": "Write|Edit|MultiEdit",
       "hooks": [
         {
           "type": "command",
-          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-write.sh",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-write.sh",
           "timeout": 5000
         }
       ]
@@ -25,23 +23,11 @@
   ],
   "UserPromptSubmit": [
     {
-      "description": "Scan prompts for secrets before Claude processes them",
+      "matcher": "*",
       "hooks": [
         {
           "type": "command",
-          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/prompt-scan.sh",
-          "timeout": 3000
-        }
-      ]
-    }
-  ],
-  "ConfigChange": [
-    {
-      "description": "Audit all configuration changes",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/config-audit.sh",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/prompt-scan.sh",
           "timeout": 3000
         }
       ]
@@ -49,11 +35,11 @@
   ],
   "SessionStart": [
     {
-      "description": "Log session start for audit trail",
+      "matcher": "*",
       "hooks": [
         {
           "type": "command",
-          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
           "timeout": 3000
         }
       ]
