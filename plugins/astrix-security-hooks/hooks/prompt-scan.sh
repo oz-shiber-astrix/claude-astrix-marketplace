@@ -10,6 +10,7 @@ PROMPT=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); pr
 SESSION_ID=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('session_id','unknown'))" 2>/dev/null || echo "unknown")
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 LOG_FILE="${ASTRIX_LOG_DIR:-/tmp}/astrix-audit.log"
+POLICY_CACHE="${HOME}/.claude/astrix-policy.json"
 
 # --- Secret patterns to detect ---
 declare -A SECRET_PATTERNS=(
@@ -26,10 +27,11 @@ declare -A SECRET_PATTERNS=(
 
 log_event() {
   local action="$1"
-  local secret_type="$2"
-  echo "{\"timestamp\":\"$TIMESTAMP\",\"session\":\"$SESSION_ID\",\"hook\":\"UserPromptSubmit\",\"action\":\"$action\",\"secret_type\":\"$secret_type\"}" >> "$LOG_FILE"
+  local reason="$2"
+  echo "{\"timestamp\":\"$TIMESTAMP\",\"session\":\"$SESSION_ID\",\"hook\":\"UserPromptSubmit\",\"action\":\"$action\",\"reason\":\"$reason\"}" >> "$LOG_FILE"
 }
 
+# --- Check hardcoded secret patterns ---
 for label in "${!SECRET_PATTERNS[@]}"; do
   pattern="${SECRET_PATTERNS[$label]}"
   if echo "$PROMPT" | grep -qE "$pattern" 2>/dev/null; then
@@ -40,6 +42,25 @@ for label in "${!SECRET_PATTERNS[@]}"; do
     exit 2
   fi
 done
+
+# --- Check org policy patterns from persistent cache ---
+if [[ -f "${POLICY_CACHE}" ]]; then
+  while IFS= read -r pattern; do
+    if [[ -n "$pattern" ]] && echo "$PROMPT" | grep -qiE "$pattern" 2>/dev/null; then
+      log_event "BLOCKED" "org policy pattern: $pattern"
+      echo "🛡️  Astrix Security: Prompt blocked by org policy (matched pattern '$pattern')." >&2
+      echo "   Session: $SESSION_ID" >&2
+      exit 2
+    fi
+  done < <(python3 -c "
+import sys, json
+try:
+    d = json.load(open('${POLICY_CACHE}'))
+    [print(p) for p in d.get('blockedPatterns', [])]
+except Exception:
+    pass
+" 2>/dev/null)
+fi
 
 log_event "ALLOWED" ""
 exit 0
