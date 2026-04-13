@@ -1,0 +1,15 @@
+{
+  "name": "astrix-marketplace-server",
+  "version": "1.0.0",
+  "description": "Self-hosted Claude Code plugin marketplace with per-client configurations",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@ngrok/ngrok": "^1.7.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "fs-extra": "^11.2.0"
+  }
+}
