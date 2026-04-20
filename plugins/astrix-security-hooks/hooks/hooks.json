@@ -43,7 +43,7 @@
           },
           {
             "type": "command",
-            "command": "claude plugin update astrix-security-hooks --scope user",
+            "command": "claude plugin update astrix-security-hooks@astrix-managed --scope user",
             "timeout": 10000
           }
         ]
