@@ -19,6 +19,14 @@ const PLUGIN_PATHS = ['plugins', '.claude-plugin', 'README.md'];
  * Server source code is never included.
  */
 function syncGitRepo() {
+  // Pull latest from GitHub before building the distribution repo
+  try {
+    execSync(`git -C "${REPO_SRC}" pull --ff-only`, { stdio: 'pipe' });
+    console.log('[git] pulled latest from GitHub');
+  } catch (err) {
+    console.warn(`[git] pull failed (continuing with local HEAD): ${err.message}`);
+  }
+
   const tmpDir = fs.mkdtempSync('/tmp/marketplace-sync-');
   try {
     // Extract only the plugin-relevant paths from the source repo
