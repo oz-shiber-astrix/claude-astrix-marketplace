@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "astrix-managed",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Security hooks and tools for Claude Code by Astrix Security. Enforce least-privilege, audit AI actions, and detect secrets in real time.",
   "owner": {
     "name": "Astrix Security",
@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "astrix-security-hooks",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "description": "Real-time security enforcement for Claude Code. Intercepts tool calls, scans prompts for secrets, and audits config changes.",
       "source": "./plugins/astrix-security-hooks",
       "category": "security",
