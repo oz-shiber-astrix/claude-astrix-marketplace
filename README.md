@@ -128,13 +128,12 @@ After creating a client, hand the org's Claude admin this snippet. They paste it
     "ASTRIX_SERVER_URL": "https://<ngrok-url>"
   },
   "extraKnownMarketplaces": {
-    "astrix-security": {
-      "source": { "source": "github", "repo": "oz-shiber-astrix/claude-astrix-marketplace" },
-      "autoUpdate": true
+    "astrix-managed": {
+      "source": { "source": "github", "repo": "oz-shiber-astrix/claude-astrix-marketplace" }
     }
   },
   "enabledPlugins": {
-    "astrix-security-hooks@astrix-security": true
+    "astrix-security-hooks@astrix-managed": true
   }
 }
 ```

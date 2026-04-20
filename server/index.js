@@ -1,10 +1,59 @@
 require('dotenv').config();
 const { createApp } = require('./src/app');
 const ngrok = require('@ngrok/ngrok');
+const { execSync } = require('child_process');
+const fs   = require('fs');
+const path = require('path');
 
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT      = parseInt(process.env.PORT || '3000', 10);
+const REPO_PATH = path.join(__dirname, 'data/marketplace.git');
+const REPO_SRC  = path.join(__dirname, '..');  // repo root (parent of server/)
+
+// Only these paths are included in the distribution repo — server code stays private.
+const PLUGIN_PATHS = ['plugins', '.claude-plugin', 'README.md'];
+
+/**
+ * Build a bare distribution repo containing only plugin files.
+ * Uses git archive to extract a subset of the source repo, commits it into
+ * a throw-away working tree, then force-pushes to the bare repo.
+ * Server source code is never included.
+ */
+function syncGitRepo() {
+  const tmpDir = fs.mkdtempSync('/tmp/marketplace-sync-');
+  try {
+    // Extract only the plugin-relevant paths from the source repo
+    const archive = execSync(
+      `git -C "${REPO_SRC}" archive HEAD -- ${PLUGIN_PATHS.join(' ')}`,
+      { maxBuffer: 50 * 1024 * 1024 }
+    );
+
+    execSync(`tar -x -C "${tmpDir}"`, { input: archive });
+
+    // Commit the snapshot into a temporary local repo
+    const GIT = `git -C "${tmpDir}" -c user.email="sync@astrix" -c user.name="Astrix Sync"`;
+    execSync(`${GIT} init`, { stdio: 'pipe' });
+    execSync(`${GIT} add -A`, { stdio: 'pipe' });
+    execSync(`${GIT} commit -m "sync: plugin files only"`, { stdio: 'pipe' });
+
+    // Push into the bare distribution repo (create it if needed)
+    if (!fs.existsSync(REPO_PATH)) {
+      fs.mkdirSync(path.dirname(REPO_PATH), { recursive: true });
+      execSync(`git init --bare "${REPO_PATH}"`, { stdio: 'pipe' });
+    }
+    execSync(`${GIT} push --force "${REPO_PATH}" HEAD:main`, { stdio: 'pipe' });
+    execSync(`git --git-dir="${REPO_PATH}" symbolic-ref HEAD refs/heads/main`, { stdio: 'pipe' });
+
+    console.log('[git] marketplace.git synced (plugin files only)');
+  } catch (err) {
+    console.warn(`[git] sync failed: ${err.message}`);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
 
 async function start() {
+  syncGitRepo();
+
   const app = createApp();
   app.set('port', PORT);
 
@@ -46,8 +95,10 @@ async function start() {
   console.log(`      -H "Content-Type: application/json" \\`);
   console.log(`      -d '{"clientId":"acme-corp","companyName":"Acme Corp","extraBlockedPatterns":["acme_secret_.*"]}'`);
   console.log(sep);
-  console.log('  IT drops into /etc/claude-code/managed-settings.json:');
-  console.log(`    { "env": { "ASTRIX_CLIENT_TOKEN": "<token>", "ASTRIX_SERVER_URL": "${publicUrl}" } }`);
+  console.log('  Org onboarding snippet (paste into managed-settings.json):');
+  console.log(`    { "extraKnownMarketplaces": { "astrix-managed": {`);
+  console.log(`        "source": { "source": "git", "url": "https://<clientId>:<token>@${publicUrl.replace(/^https?:\/\//, '')}/git/marketplace.git" },`);
+  console.log(`        } }, "enabledPlugins": { "astrix-security-hooks@astrix-managed": true } }`);
   console.log(`${sep}\n`);
 }
 

@@ -25,14 +25,23 @@ function generateToken() {
 }
 
 /**
- * The snippet IT pastes into /etc/claude-code/managed-settings.json.
- * Claude Code makes these env vars available to hook scripts at runtime.
+ * The snippet IT pastes into /etc/claude-code/managed-settings.json (or
+ * Claude.ai Admin Console → Managed settings for Teams/Enterprise).
+ * No env vars needed — the token is embedded in the marketplace git URL.
+ * Claude Code distributes this to every developer automatically.
  */
-function buildSettingsSnippet(token, serverUrl) {
+function buildSettingsSnippet(clientId, token, serverUrl) {
   return {
-    env: {
-      ASTRIX_CLIENT_TOKEN: token,
-      ASTRIX_SERVER_URL: serverUrl,
+    extraKnownMarketplaces: {
+      'astrix-managed': {
+        source: {
+          source: 'git',
+          url: (() => { const u = new URL('/git/marketplace.git', serverUrl); u.username = clientId; u.password = token; return u.href; })(),
+        },
+      },
+    },
+    enabledPlugins: {
+      'astrix-security-hooks@astrix-managed': true,
     },
   };
 }
@@ -42,7 +51,7 @@ function maskToken(token) {
 }
 
 function clientResponse(client, serverUrl) {
-  const snippet = buildSettingsSnippet(client.token, serverUrl);
+  const snippet = buildSettingsSnippet(client.clientId, client.token, serverUrl);
   return {
     clientId: client.clientId,
     companyName: client.companyName,

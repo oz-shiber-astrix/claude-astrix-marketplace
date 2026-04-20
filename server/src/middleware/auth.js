@@ -21,11 +21,22 @@ function adminAuth(req, res, next) {
 }
 
 async function clientTokenAuth(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing Authorization: Bearer <token> header' });
+  // Accept token from: ?token=, Authorization: Bearer, or Authorization: Basic (password field)
+  let token = req.query.token || '';
+
+  if (!token) {
+    const authHeader = req.headers['authorization'] || '';
+    if (authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+    } else if (authHeader.startsWith('Basic ')) {
+      const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
+      token = decoded.split(':').slice(1).join(':'); // everything after the first colon is the password
+    }
   }
-  const token = authHeader.slice(7);
+
+  if (!token) {
+    return res.status(401).json({ error: 'Missing token — use Authorization: Basic or Bearer <token>' });
+  }
 
   try {
     const clients = await loadClients();

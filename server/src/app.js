@@ -1,7 +1,7 @@
 const express = require('express');
-const { adminAuth } = require('./middleware/auth');
 const adminRouter = require('./routes/admin');
 const configRouter = require('./routes/config');
+const gitRouter   = require('./routes/git');
 const statusRouter = require('./routes/status');
 
 function createApp() {
@@ -10,8 +10,11 @@ function createApp() {
   // Admin CRUD API — protected by ADMIN_TOKEN
   app.use('/admin', adminRouter);
 
-  // Client config endpoint — protected by per-client token
+  // Client config endpoint — protected by per-client token (?token= or Bearer)
   app.use('/config', configRouter);
+
+  // Git HTTP backend — serves static marketplace.git to all orgs
+  app.use('/git/marketplace.git', gitRouter);
 
   // Status / dashboard page
   app.use('/', statusRouter);

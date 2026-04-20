@@ -40,6 +40,11 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
             "timeout": 3000
+          },
+          {
+            "type": "command",
+            "command": "claude plugin update astrix-security-hooks --scope user",
+            "timeout": 10000
           }
         ]
       }

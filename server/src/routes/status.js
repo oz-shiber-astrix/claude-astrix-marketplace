@@ -19,9 +19,16 @@ router.get('/', async (req, res) => {
     ? clientList.map(c => {
         const masked = c.token ? c.token.slice(0, 12) + '...' + c.token.slice(-4) : '(no token)';
         const snippet = JSON.stringify({
-          env: {
-            ASTRIX_CLIENT_TOKEN: c.token || '(regenerate)',
-            ASTRIX_SERVER_URL: serverUrl,
+          extraKnownMarketplaces: {
+            'astrix-managed': {
+              source: {
+                source: 'git',
+                url: (() => { const u = new URL('/git/marketplace.git', serverUrl); u.username = c.clientId; u.password = c.token || '(regenerate)'; return u.href; })(),
+              },
+              },
+          },
+          enabledPlugins: {
+            'astrix-security-hooks@astrix-managed': true,
           },
         }, null, 2);
         return `
@@ -73,7 +80,7 @@ router.get('/', async (req, res) => {
         <th>Company</th>
         <th>Extra Blocked Patterns</th>
         <th>Token</th>
-        <th>Paste into /etc/claude-code/managed-settings.json</th>
+        <th>Paste into managed-settings.json / Claude.ai Admin Console</th>
         <th>Last Updated</th>
       </tr>
     </thead>
@@ -87,8 +94,10 @@ router.get('/', async (req, res) => {
     <p><span class="badge put">PUT</span> <code>/admin/clients/:id</code> — update patterns/name</p>
     <p><span class="badge post">POST</span> <code>/admin/clients/:id/rotate-token</code> — issue new token</p>
     <p><span class="badge del">DELETE</span> <code>/admin/clients/:id</code></p>
-    <h3 style="margin-top:1rem">Client config endpoint — <code>Authorization: Bearer $ASTRIX_CLIENT_TOKEN</code></h3>
-    <p><span class="badge get">GET</span> <code>/config</code> — returns <code>{"clientId","companyName","blockedPatterns":[]}</code></p>
+    <h3 style="margin-top:1rem">Client config endpoint — <code>?token=&lt;clientToken&gt;</code> or <code>Authorization: Bearer</code></h3>
+    <p><span class="badge get">GET</span> <code>/config?token=…</code> — returns <code>{"clientId","companyName","blockedPatterns":[],"version":N}</code></p>
+    <h3 style="margin-top:1rem">Marketplace git endpoint — <code>Authorization: Basic x:&lt;clientToken&gt;</code></h3>
+    <p><span class="badge get">GET</span> <code>https://x:&lt;token&gt;@&lt;host&gt;/git/marketplace.git</code> — token-authenticated git clone/pull</p>
   </div>
 </body>
 </html>`);
