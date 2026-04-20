@@ -2,3 +2,4 @@ server/node_modules/
 server/repos/
 server/.env
 server/data/clients.json
+server/data/marketplace.git/
