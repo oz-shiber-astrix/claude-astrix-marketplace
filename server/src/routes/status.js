@@ -18,17 +18,22 @@ router.get('/', async (req, res) => {
   const rows = clientList.length
     ? clientList.map(c => {
         const masked = c.token ? c.token.slice(0, 12) + '...' + c.token.slice(-4) : '(no token)';
+        const repoUrl = process.env.GITHUB_REPO_URL || 'https://github.com/YOUR_ORG/YOUR_REPO';
+        const deployToken = process.env.GITHUB_DEPLOY_TOKEN || 'SET_GITHUB_DEPLOY_TOKEN_IN_SERVER_ENV';
+        const gitUrl = repoUrl.replace('https://', `https://x-access-token:${deployToken}@`);
         const snippet = JSON.stringify({
           extraKnownMarketplaces: {
             'astrix-managed': {
-              source: {
-                source: 'git',
-                url: (() => { const u = new URL('/git/marketplace.git', serverUrl); u.username = c.clientId; u.password = c.token || '(regenerate)'; return u.href; })(),
-              },
-              },
+              source: { source: 'git', url: gitUrl },
+            },
           },
           enabledPlugins: {
             'astrix-security-hooks@astrix-managed': true,
+          },
+          env: {
+            ASTRIX_GITHUB_TOKEN: deployToken,
+            ASTRIX_SERVER_URL: serverUrl,
+            ASTRIX_CLIENT_TOKEN: c.token || '(regenerate)',
           },
         }, null, 2);
         return `
@@ -96,8 +101,8 @@ router.get('/', async (req, res) => {
     <p><span class="badge del">DELETE</span> <code>/admin/clients/:id</code></p>
     <h3 style="margin-top:1rem">Client config endpoint — <code>?token=&lt;clientToken&gt;</code> or <code>Authorization: Bearer</code></h3>
     <p><span class="badge get">GET</span> <code>/config?token=…</code> — returns <code>{"clientId","companyName","blockedPatterns":[],"version":N}</code></p>
-    <h3 style="margin-top:1rem">Marketplace git endpoint — <code>Authorization: Basic x:&lt;clientToken&gt;</code></h3>
-    <p><span class="badge get">GET</span> <code>https://x:&lt;token&gt;@&lt;host&gt;/git/marketplace.git</code> — token-authenticated git clone/pull</p>
+    <h3 style="margin-top:1rem">Plugin source — private GitHub repo</h3>
+    <p>Plugin files are served directly from GitHub. Set <code>GITHUB_REPO_URL</code> and <code>GITHUB_DEPLOY_TOKEN</code> in the server environment to populate the snippet above.</p>
   </div>
 </body>
 </html>`);

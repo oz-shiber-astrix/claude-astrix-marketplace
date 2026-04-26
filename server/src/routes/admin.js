@@ -30,18 +30,24 @@ function generateToken() {
  * No env vars needed — the token is embedded in the marketplace git URL.
  * Claude Code distributes this to every developer automatically.
  */
-function buildSettingsSnippet(clientId, token, serverUrl) {
+function buildSettingsSnippet(token, serverUrl) {
+  const repoUrl = process.env.GITHUB_REPO_URL || 'https://github.com/YOUR_ORG/YOUR_REPO';
+  const deployToken = process.env.GITHUB_DEPLOY_TOKEN || 'SET_GITHUB_DEPLOY_TOKEN_IN_SERVER_ENV';
+  const gitUrl = repoUrl.replace('https://', `https://x-access-token:${deployToken}@`);
+
   return {
     extraKnownMarketplaces: {
       'astrix-managed': {
-        source: {
-          source: 'git',
-          url: (() => { const u = new URL('/git/marketplace.git', serverUrl); u.username = clientId; u.password = token; return u.href; })(),
-        },
+        source: { source: 'git', url: gitUrl },
       },
     },
     enabledPlugins: {
       'astrix-security-hooks@astrix-managed': true,
+    },
+    env: {
+      ASTRIX_GITHUB_TOKEN: deployToken,
+      ASTRIX_SERVER_URL: serverUrl,
+      ASTRIX_CLIENT_TOKEN: token,
     },
   };
 }
@@ -51,7 +57,7 @@ function maskToken(token) {
 }
 
 function clientResponse(client, serverUrl) {
-  const snippet = buildSettingsSnippet(client.clientId, client.token, serverUrl);
+  const snippet = buildSettingsSnippet(client.token, serverUrl);
   return {
     clientId: client.clientId,
     companyName: client.companyName,

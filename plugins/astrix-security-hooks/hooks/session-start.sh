@@ -89,7 +89,8 @@ fi
 
 # ── Fetch config from server ──────────────────────────────────────────────────
 FETCHED=$(curl -sf \
-  "${SERVER_URL}/config?token=${TOKEN}" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  "${SERVER_URL}/config" \
   --max-time 3 \
   2>/dev/null || echo "")
 
